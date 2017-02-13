@@ -57,7 +57,9 @@ AbcWriter::AbcWriter(const std::string& file, const std::string& xFormName, cons
 		else
 		{
 			std::cout << "ERROR: Unrecognised Property Type. This will not be created! (" << std::get<0>(p) << ")" << std::endl;
+			continue;
 		}
+		m_arbScopes.push_back(scope);
 
 	}
 
@@ -172,16 +174,16 @@ AbcWriter::addSample(const std::vector<Alembic::Abc::V3f>& vertices,
 	for(size_t i = 0; i < floatProps.size(); ++i)
 	{
 		Alembic::AbcGeom::OFloatGeomParam::Sample floatSamp;
-		//floatSamp.setScope(floatPropsScope[i]);
-		floatSamp.setVals(Alembic::AbcGeom::FloatArraySample(&floatProps[i].front(), floatProps[0].size()));
+		floatSamp.setScope(m_arbScopes[i]);
+		floatSamp.setVals(Alembic::AbcGeom::FloatArraySample(&floatProps[i].front(), floatProps[i].size()));
 		m_floatParams[i].set(floatSamp);
 	}
 
 	for(size_t i = 0; i < vectorProps.size(); ++i)
 	{
 		Alembic::AbcGeom::OV3fGeomParam::Sample vectorSamp;
-		//vectorSamp.setScope(vectorPropsScope[i]);
-		vectorSamp.setVals(Alembic::AbcGeom::V3fArraySample(&vectorProps[i].front(), vectorProps[0].size()));
+		vectorSamp.setScope(m_arbScopes[floatProps.size() + i]);
+		vectorSamp.setVals(Alembic::AbcGeom::V3fArraySample(&vectorProps[i].front(), vectorProps[i].size()));
 		m_vectorParams[i].set(vectorSamp);
 	}
 
