@@ -26,31 +26,70 @@ AbcReader::~AbcReader()
 }
 
 
+std::vector<float>& AbcReader::getFloatProperty(const std::string& name)
+{
+	return m_arbGeoFloatProperties[m_arbGeoPropertiesMap[name]];
+}
+
+std::vector<Eigen::Vector3f>& AbcReader::getVectorProperty(const std::string& name)
+{
+	return m_arbGeoVectorProperties[m_arbGeoPropertiesMap[name]];
+}
+
+
+
 bool
-AbcReader::openArchive(const std::string& file)
+AbcReader::openArchive(const std::string& file, const std::string& xFormName, const std::string& meshName,
+	const std::vector<std::tuple<std::string, PROP_TYPE, PROP_SCOPE>>& arbGeoProperties)
 {
 	Alembic::AbcCoreFactory::IFactory factory;
 	factory.setPolicy(Alembic::Abc::ErrorHandler::kQuietNoopPolicy);
 	Alembic::AbcCoreFactory::IFactory::CoreType coreType;
 
+	//Open archive
 	m_data->archive =
 		std::make_shared<Alembic::Abc::IArchive>(factory.getArchive(file, coreType));
-
+	
+	//get the top node
 	Alembic::Abc::IObject topObject(*m_data->archive, Alembic::Abc::kTop);
 
+	//get the transform
 	m_data->transform =
-		std::make_shared<Alembic::AbcGeom::IXform>(Alembic::AbcGeom::IObject(topObject, "XForm"), Alembic::AbcGeom::kWrapExisting);
+		std::make_shared<Alembic::AbcGeom::IXform>(Alembic::AbcGeom::IObject(topObject, xFormName), Alembic::AbcGeom::kWrapExisting);
 
+	//get the mesh
+	m_data->mesh = std::make_shared<Alembic::AbcGeom::IPolyMesh>(Alembic::AbcGeom::IObject(*m_data->transform, meshName), Alembic::AbcGeom::kWrapExisting);
 
-	m_data->mesh = std::make_shared<Alembic::AbcGeom::IPolyMesh>(Alembic::AbcGeom::IObject(*m_data->transform, "deformedMesh"), Alembic::AbcGeom::kWrapExisting);
-
-
+	//get mesh properties
 	Alembic::AbcGeom::IPolyMeshSchema& schema = m_data->mesh->getSchema();
 
+	//build internal dicationary
+	m_numArbGeoFloatProps = 0;
+	m_numArbGeoVectorProps = 0;
+	for(auto& p : arbGeoProperties)
+	{
+		if(std::get<1>(p) == PROP_TYPE::FLOAT)
+		{
+			m_arbGeoPropertiesMap.emplace(std::make_pair(std::get<0>(p), m_numArbGeoFloatProps));
+			++m_numArbGeoFloatProps;
+		}
+		else if(std::get<1>(p) == PROP_TYPE::VECTOR)
+		{
+			m_arbGeoPropertiesMap.emplace(std::make_pair(std::get<0>(p), m_numArbGeoVectorProps));
+			++m_numArbGeoVectorProps;
+		}
+		else
+		{
+			std::cout << "ERROR: Unrecognised Property Type. This will not be read! (" << std::get<0>(p) << ")" << std::endl;
+		}
+	}
+
+	//print some debug stuff
 	std::cout << "Num Poly Mesh Schema Samples Read From file: " << schema.getNumSamples() << std::endl;
 	m_data->numSamples = schema.getNumSamples();
-	sampleSpecific(0);
 
+	//make sure to read the first sample into memory
+	sampleSpecific(0);
 
 	return true;
 }
@@ -58,9 +97,10 @@ AbcReader::openArchive(const std::string& file)
 void
 AbcReader::readCurrentSampleIntoMemory()
 {
-	//get the Sample
+	//create a sample selector
 	Alembic::AbcGeom::ISampleSelector sampleSelector((Alembic::Abc::index_t)m_data->currentSample);
 
+	//PREDEFINED_PROPERTIES-----------------------------------------------------
 	Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
 
 	m_data->mesh->getSchema().get(sample, sampleSelector);
@@ -86,21 +126,62 @@ AbcReader::readCurrentSampleIntoMemory()
 		m_faceIndices[i][1] = (*faceIndices)[i * 4 + 1];
 		m_faceIndices[i][2] = (*faceIndices)[i * 4 + 2];
 		m_faceIndices[i][3] = (*faceIndices)[i * 4 + 3];
-		//std::cout << i << ": " << m_faceIndices[i][0] << ", " <<
-		//	m_faceIndices[i][1] << ", " <<
-		//	m_faceIndices[i][2] << ", " <<
-		//	m_faceIndices[i][3] << std::endl;
 	}
 
-	//3. Velocities
-	//int numVelocities = sample.getVelocities()->size();
-	//m_velocities.resize(numVelocities);
-	//for (int i = 0; i < numVelocities; ++i)
-	//{
-	//	m_velocities[i][0] = (*sample.getVelocities())[i][0];
-	//	m_velocities[i][1] = (*sample.getVelocities())[i][1];
-	//	m_velocities[i][2] = (*sample.getVelocities())[i][2];
-	//}
+	//CUSTOM PROPERTIES--------------------------------------------------------
+	Alembic::AbcGeom::ICompoundProperty arbGeomPs = m_data->mesh->getSchema().getArbGeomParams();
+	//loop over properties, find the ones we want (this is a safety to make sure properties exist!)
+	//could lose the loop easily for clarity and performance
+	std::vector<Alembic::AbcGeom::IFloatGeomParam::prop_type::sample_ptr_type> floatSampleVals(m_numArbGeoFloatProps);
+	std::vector<Alembic::AbcGeom::IV3fGeomParam::prop_type::sample_ptr_type> vectorSampleVals(m_numArbGeoVectorProps);
+	for(size_t i = 0; i < arbGeomPs.getNumProperties(); ++i)
+	{
+		const Alembic::AbcGeom::PropertyHeader& header = arbGeomPs.getPropertyHeader(i);
+		const std::string& name = header.getName();
+
+		for(auto& p_map : m_arbGeoPropertiesMap)
+		{
+			if(p_map.first == name)
+			{
+				if(Alembic::AbcGeom::IFloatGeomParam::matches(header))
+				{
+					Alembic::AbcGeom::IFloatGeomParam param(arbGeomPs, name);
+					floatSampleVals[p_map.second] = param.getExpandedValue(sampleSelector).getVals();
+				}
+				else if (Alembic::AbcGeom::IV3fGeomParam::matches(header))
+				{
+					Alembic::AbcGeom::IV3fGeomParam param(arbGeomPs, name);
+					vectorSampleVals[p_map.second] = param.getExpandedValue(sampleSelector).getVals();
+				}
+			}
+		}
+	}
+
+	//now parse values
+
+	//for float properties
+	m_arbGeoFloatProperties.resize(floatSampleVals.size());
+	for(size_t i = 0; i < floatSampleVals.size(); ++i)
+	{
+		m_arbGeoFloatProperties[i].resize(floatSampleVals[i]->size());
+		for(size_t j = 0; j < floatSampleVals[i]->size(); ++j)
+		{
+			m_arbGeoFloatProperties[i][j] = floatSampleVals[i]->get()[j];
+		}
+	}
+
+	//for vector properties
+	m_arbGeoVectorProperties.resize(vectorSampleVals.size());
+	for(size_t i = 0; i < vectorSampleVals.size(); ++i)
+	{
+		m_arbGeoVectorProperties[i].resize(vectorSampleVals[i]->size());
+		for(size_t j = 0; j < vectorSampleVals[i]->size(); ++j)
+		{
+			m_arbGeoVectorProperties[i][j][0] = vectorSampleVals[i]->get()[j][0];
+			m_arbGeoVectorProperties[i][j][1] = vectorSampleVals[i]->get()[j][1];
+			m_arbGeoVectorProperties[i][j][2] = vectorSampleVals[i]->get()[j][2];
+		}
+	}
 }
 
 bool

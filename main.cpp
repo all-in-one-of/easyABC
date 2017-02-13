@@ -9,7 +9,7 @@
 
 int main(int argc, char* argv[])
 {
-	if (argc < 4)
+	/*if (argc < 4)
 	{
 		std::cout << "Please provide: surface mesh name, alembic archive name, target alembic archive name!" << std::endl;
 		return 0;
@@ -17,13 +17,27 @@ int main(int argc, char* argv[])
 
 	std::string inputMeshName(argv[1]);
 	std::string outputMeshName(argv[2]);
+	*/
+	std::string inputMeshName("testGeo/non_animated.abc");
+	std::string xFormName("gabc");
+	std::string meshName("gabc");
+	std::vector<std::tuple<std::string, AbcReader::PROP_TYPE, AbcReader::PROP_SCOPE>> customProperties;
+	customProperties.emplace_back("Cd", AbcReader::FLOAT, AbcReader::POINT);
+	customProperties.emplace_back("noise", AbcReader::FLOAT, AbcReader::POINT);
+	customProperties.emplace_back("vector_noise", AbcReader::VECTOR, AbcReader::POINT);
 
 	//1. Read Alembic Archive
 	AbcReader inputMesh;
-	inputMesh.openArchive(inputMeshName);
+	std::cout << "Opening input mesh..." << std::endl;
+	inputMesh.openArchive(inputMeshName, xFormName, meshName, customProperties);
+
+	const std::vector<float>& noise = inputMesh.getFloatProperty("noise");
+	const std::vector<float>& Cd = inputMesh.getFloatProperty("Cd");
+
+
 
 	//2. Write Alembic Archive
-	AbcWriter outputMesh(outputMeshName, "animatedMesh");
+	/*AbcWriter outputMesh(outputMeshName, "animatedMesh");
 	std::vector<Imath::V3f> vertexPositions;
 	std::vector<int> faceIndices;
 	std::vector<int> faceCounts;
@@ -41,5 +55,5 @@ int main(int argc, char* argv[])
 
 	}
 
-	std::cout << "Tidying up, ..." << std::endl;
+	std::cout << "Tidying up, ..." << std::endl;*/
 }
