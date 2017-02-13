@@ -116,16 +116,21 @@ AbcReader::readCurrentSampleIntoMemory()
 	}
 
 	//2. FaceIndices
-	int numFaceIndices = sample.getFaceIndices()->size() / 4;
+	int numFaceIndices = sample.getFaceIndices()->size();
 	m_faceIndices.resize(numFaceIndices);
 	Alembic::Abc::Int32ArraySamplePtr faceIndices = sample.getFaceIndices();
 	for (int i = 0; i < numFaceIndices; ++i)
 	{
-		m_faceIndices[i].resize(4);
-		m_faceIndices[i][0] = (*faceIndices)[i * 4 + 0];
-		m_faceIndices[i][1] = (*faceIndices)[i * 4 + 1];
-		m_faceIndices[i][2] = (*faceIndices)[i * 4 + 2];
-		m_faceIndices[i][3] = (*faceIndices)[i * 4 + 3];
+		m_faceIndices[i] = (*faceIndices)[i];
+	}
+
+	//3. FaceCounts
+	int numFaceCounts = sample.getFaceCounts()->size();
+	m_faceCounts.resize(numFaceCounts);
+	Alembic::Abc::Int32ArraySamplePtr faceCounts = sample.getFaceCounts();
+	for (int i = 0; i < numFaceCounts; ++i)
+	{
+		m_faceCounts[i]= (*faceCounts)[i];
 	}
 
 	//NORMALS -----------------------------------------------------------------

@@ -35,6 +35,9 @@ int main(int argc, char* argv[])
 	const std::vector<float>& Cd = inputMesh.getFloatProperty("Cd");
 	const std::vector<Eigen::Vector3f>& vector_noise = inputMesh.getVectorProperty("vector_noise");
 
+	const std::vector<Eigen::Vector3f>& points = inputMesh.getPositions();
+	const std::vector<int>& faceIndices = inputMesh.getFaceIndices();
+	const std::vector<int>& faceCounts = inputMesh.getFaceCounts();
 
 	//2. Write Alembic Archive
 	/*AbcWriter outputMesh(outputMeshName, "animatedMesh");
