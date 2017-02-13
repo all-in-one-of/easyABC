@@ -44,6 +44,7 @@ public:
 	//Data Accessors
 	std::vector<Eigen::Vector3f>& getPositions() { return m_positions; }
 	std::vector<int>& getFaceIndices(int idx) { return m_faceIndices[idx]; }
+	std::vector<Eigen::Vector3f>& getNormals() { return m_normals; }
 	std::vector<float>& getFloatProperty(const std::string& name);
 	std::vector<Eigen::Vector3f>& getVectorProperty(const std::string& name);
 
@@ -56,6 +57,7 @@ private:
 	std::vector<Eigen::Vector3f> m_positions;
 	std::vector<Eigen::Vector3f> m_velocities;
 	std::vector<std::vector<int>> m_faceIndices;
+	std::vector<Eigen::Vector3f> m_normals;
 	//for arbitrary float properties added to the mesh
 	std::unordered_map<std::string, size_t> m_arbGeoPropertiesMap;
 	size_t m_numArbGeoFloatProps;

@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
 
 	const std::vector<float>& noise = inputMesh.getFloatProperty("noise");
 	const std::vector<float>& Cd = inputMesh.getFloatProperty("Cd");
-
+	const std::vector<Eigen::Vector3f>& vector_noise = inputMesh.getVectorProperty("vector_noise");
 
 
 	//2. Write Alembic Archive

@@ -128,6 +128,27 @@ AbcReader::readCurrentSampleIntoMemory()
 		m_faceIndices[i][3] = (*faceIndices)[i * 4 + 3];
 	}
 
+	//NORMALS -----------------------------------------------------------------
+	for(size_t i = 0; i < m_data->mesh->getSchema().getNumProperties(); ++i)
+	{
+		const Alembic::AbcGeom::PropertyHeader& header = m_data->mesh->getSchema().getPropertyHeader(i);
+		const std::string& name = header.getName();
+
+		if(name == "N")
+		{
+			Alembic::AbcGeom::IV3fGeomParam param(m_data->mesh->getSchema(), name);
+			Alembic::AbcGeom::IV3fGeomParam::prop_type::sample_ptr_type valuePtr = param.getExpandedValue(sampleSelector).getVals();
+
+			m_normals.resize(valuePtr->size());
+			for(size_t j = 0; j < valuePtr->size(); ++j)
+			{
+				m_normals[j][0] = valuePtr->get()[j][0];
+				m_normals[j][1] = valuePtr->get()[j][1];
+				m_normals[j][2] = valuePtr->get()[j][2];
+			}
+		}
+	}
+
 	//CUSTOM PROPERTIES--------------------------------------------------------
 	Alembic::AbcGeom::ICompoundProperty arbGeomPs = m_data->mesh->getSchema().getArbGeomParams();
 	//loop over properties, find the ones we want (this is a safety to make sure properties exist!)
