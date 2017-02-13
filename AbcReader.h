@@ -3,30 +3,16 @@
 #include <string>
 #include <vector>
 #include <tuple>
-#include <unordered_map>
-
-#include <Eigen/Dense>
 
 #include <Alembic/Abc/All.h>
+
+#include "easyAbcUtil.h"
 
 struct AbcReaderImp;
 
 class AbcReader
 {
 public:
-	enum PROP_TYPE
-	{
-		FLOAT,
-		VECTOR,
-	};
-
-	enum PROP_SCOPE
-	{
-		POINT,
-		VERTEX,
-		FACE,
-	};
-
 	AbcReader();
 	~AbcReader();
 
@@ -42,13 +28,13 @@ public:
 	int getNumFaces() { return m_faceCounts.size(); }
 
 	//Data Accessors
-	std::vector<Eigen::Vector3f>& getPositions() { return m_positions; }
+	std::vector<Alembic::Abc::V3f>& getPositions() { return m_positions; }
 	std::vector<int>& getFaceIndices() { return m_faceIndices; }
 	std::vector<int>& getFaceCounts() { return m_faceCounts; }
-	std::vector<Eigen::Vector3f>& getNormals() { return m_normals; }
-	
+	std::vector<Alembic::Abc::V3f>& getNormals() { return m_normals; }
+
 	std::vector<float>& getFloatProperty(const std::string& name);
-	std::vector<Eigen::Vector3f>& getVectorProperty(const std::string& name);
+	std::vector<Alembic::Abc::V3f>& getVectorProperty(const std::string& name);
 
 private:
 
@@ -56,16 +42,16 @@ private:
 
 	std::shared_ptr<AbcReaderImp> m_data;
 
-	std::vector<Eigen::Vector3f> m_positions;
-	std::vector<Eigen::Vector3f> m_velocities;
+	std::vector<Alembic::Abc::V3f> m_positions;
+	std::vector<Alembic::Abc::V3f> m_velocities;
 	std::vector<int> m_faceIndices;
 	std::vector<int> m_faceCounts;
-	std::vector<Eigen::Vector3f> m_normals;
+	std::vector<Alembic::Abc::V3f> m_normals;
 	//for arbitrary float properties added to the mesh
 	std::unordered_map<std::string, size_t> m_arbGeoPropertiesMap;
 	size_t m_numArbGeoFloatProps;
 	size_t m_numArbGeoVectorProps;
 	std::vector<std::vector<float>> m_arbGeoFloatProperties;
-	std::vector<std::vector<Eigen::Vector3f>> m_arbGeoVectorProperties;
+	std::vector<std::vector<Alembic::Abc::V3f>> m_arbGeoVectorProperties;
 };
 

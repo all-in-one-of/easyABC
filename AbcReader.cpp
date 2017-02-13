@@ -31,7 +31,7 @@ std::vector<float>& AbcReader::getFloatProperty(const std::string& name)
 	return m_arbGeoFloatProperties[m_arbGeoPropertiesMap[name]];
 }
 
-std::vector<Eigen::Vector3f>& AbcReader::getVectorProperty(const std::string& name)
+std::vector<Alembic::Abc::V3f>& AbcReader::getVectorProperty(const std::string& name)
 {
 	return m_arbGeoVectorProperties[m_arbGeoPropertiesMap[name]];
 }
