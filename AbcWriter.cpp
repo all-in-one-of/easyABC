@@ -26,6 +26,8 @@ AbcWriter::AbcWriter(const std::string& file, const std::string& xFormName, cons
 
 	Alembic::AbcGeom::OCompoundProperty arbGeomPs = m_data->mesh->getSchema().getArbGeomParams();
 	//create custom properties
+	std::vector<std::string> vectorPropNames;
+	std::vector<Alembic::AbcGeom::GeometryScope> vectorPropScopes;
 	for(auto& p : arbGeoProperties)
 	{
 		Alembic::AbcGeom::GeometryScope scope;
@@ -49,19 +51,31 @@ AbcWriter::AbcWriter(const std::string& file, const std::string& xFormName, cons
 		if(std::get<1>(p) == PROP_TYPE::FLOAT)
 		{
 			m_floatParams.emplace_back(arbGeomPs, std::get<0>(p), false, scope, 1); 
+			m_arbScopes.push_back(scope);
+			m_arbNames.push_back(std::get<0>(p));
 		}
 		else if(std::get<1>(p) == PROP_TYPE::VECTOR)
 		{
-			m_vectorParams.emplace_back(arbGeomPs, std::get<0>(p), false, scope, 1); 
+			if(std::get<0>(p) == "Cd")
+			{
+				m_colourParams.emplace_back(arbGeomPs, std::get<0>(p), false, scope, 1);
+			}
+			else
+			{
+				m_vectorParams.emplace_back(arbGeomPs, std::get<0>(p), false, scope, 1);
+			}
+			vectorPropScopes.push_back(scope);
+			vectorPropNames.push_back(std::get<0>(p));
 		}
 		else
 		{
 			std::cout << "ERROR: Unrecognised Property Type. This will not be created! (" << std::get<0>(p) << ")" << std::endl;
 			continue;
 		}
-		m_arbScopes.push_back(scope);
-
 	}
+
+	m_arbNames.insert(m_arbNames.end(), vectorPropNames.begin(), vectorPropNames.end());
+	m_arbScopes.insert(m_arbScopes.end(), vectorPropScopes.begin(), vectorPropScopes.end());
 
 	if (m_data->archive->valid())
 	{
@@ -171,20 +185,34 @@ AbcWriter::addSample(const std::vector<Alembic::Abc::V3f>& vertices,
 	sample.setNormals(normalsSamp);
 
 	//CUSTOM------------------------------------------------------------------------
+	//std::cout << "Writing Float Props..." << std::endl;
 	for(size_t i = 0; i < floatProps.size(); ++i)
 	{
+		//std::cout << m_arbNames[i] << std::endl;
 		Alembic::AbcGeom::OFloatGeomParam::Sample floatSamp;
 		floatSamp.setScope(m_arbScopes[i]);
 		floatSamp.setVals(Alembic::AbcGeom::FloatArraySample(&floatProps[i].front(), floatProps[i].size()));
 		m_floatParams[i].set(floatSamp);
 	}
 
+	//std::cout << "Writing Colour Props..." << std::endl;
+	size_t colourIdx = 0;
 	for(size_t i = 0; i < vectorProps.size(); ++i)
 	{
+		//std::cout <<  m_arbNames[floatProps.size() + i] << std::endl;
+		if(m_arbNames[floatProps.size() + i] == "Cd")
+		{
+			Alembic::AbcGeom::OC3fGeomParam::Sample vectorSamp;
+			vectorSamp.setScope(m_arbScopes[floatProps.size() + i]);
+			vectorSamp.setVals(Alembic::AbcGeom::C3fArraySample( (const Imath::C3f *) &vectorProps[i].front(), vectorProps[i].size()));
+			m_colourParams[colourIdx].set(vectorSamp);
+			++colourIdx;
+			continue;
+		}
 		Alembic::AbcGeom::OV3fGeomParam::Sample vectorSamp;
-		vectorSamp.setScope(m_arbScopes[floatProps.size() + i]);
-		vectorSamp.setVals(Alembic::AbcGeom::V3fArraySample(&vectorProps[i].front(), vectorProps[i].size()));
-		m_vectorParams[i].set(vectorSamp);
+		vectorSamp.setScope(m_arbScopes[floatProps.size() + i + colourIdx]);
+		vectorSamp.setVals(Alembic::AbcGeom::V3fArraySample(&vectorProps[i ].front(), vectorProps[i].size()));
+		m_vectorParams[i - colourIdx].set(vectorSamp);
 	}
 
 	//set mesh sample

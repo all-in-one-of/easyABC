@@ -40,6 +40,8 @@ private:
 	//custom properties
 	std::vector<Alembic::AbcGeom::OFloatGeomParam> m_floatParams;
 	std::vector<Alembic::AbcGeom::OV3fGeomParam> m_vectorParams;
+	std::vector<Alembic::AbcGeom::OC3fGeomParam> m_colourParams;
 	std::vector<Alembic::AbcGeom::GeometryScope> m_arbScopes;
+	std::vector<std::string> m_arbNames;
 };
 

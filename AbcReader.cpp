@@ -133,7 +133,7 @@ AbcReader::readCurrentSampleIntoMemory()
 		m_faceCounts[i]= (*faceCounts)[i];
 	}
 
-	std::cout << "Reading Normals..." << std::endl;
+	//std::cout << "Reading Normals..." << std::endl;
 	//NORMALS -----------------------------------------------------------------
 	for(size_t i = 0; i < m_data->mesh->getSchema().getNumProperties(); ++i)
 	{
@@ -155,7 +155,7 @@ AbcReader::readCurrentSampleIntoMemory()
 		}
 	}
 
-	std::cout << "Parsing Custom Params..." << std::endl;
+	//std::cout << "Parsing Custom Params..." << std::endl;
 	//CUSTOM PROPERTIES--------------------------------------------------------
 	Alembic::AbcGeom::ICompoundProperty arbGeomPs = m_data->mesh->getSchema().getArbGeomParams();
 	//loop over properties, find the ones we want (this is a safety to make sure properties exist!)
@@ -175,19 +175,19 @@ AbcReader::readCurrentSampleIntoMemory()
 				{
 					Alembic::AbcGeom::IFloatGeomParam param(arbGeomPs, name);
 					floatSampleVals[p_map.second] = param.getExpandedValue(sampleSelector).getVals();
-					std::cout << "Found float param: " << name << std::endl;
+					//std::cout << "Found float param: " << name << std::endl;
 				}
 				else if (Alembic::AbcGeom::IV3fGeomParam::matches(header) || Alembic::AbcGeom::IC3fGeomParam::matches(header))
 				{
 					Alembic::AbcGeom::IV3fGeomParam param(arbGeomPs, name);
 					vectorSampleVals[p_map.second] = param.getExpandedValue(sampleSelector).getVals();
-					std::cout << "Found vector param: " << name << std::endl;
+					//std::cout << "Found vector param: " << name << std::endl;
 				}
 			}
 		}
 	}
 
-	std::cout << "Reading floats params..." << std::endl;
+	//std::cout << "Reading floats params..." << std::endl;
 	//now parse values
 
 	//for float properties
@@ -201,7 +201,7 @@ AbcReader::readCurrentSampleIntoMemory()
 		}
 	}
 
-	std::cout << "Reading Vector params..." << std::endl;	
+	//std::cout << "Reading Vector params..." << std::endl;	
 	//for vector properties
 	m_arbGeoVectorProperties.resize(vectorSampleVals.size());
 	for(size_t i = 0; i < vectorSampleVals.size(); ++i)
