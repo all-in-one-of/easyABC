@@ -67,8 +67,8 @@ void AbcWriter::setupObject(const std::string& xFormName, const std::string& mes
 			{
 				m_vectorParams.back().emplace_back(arbGeomPs, std::get<0>(p), false, scope, 1);
 			}
-			vectorPropScopes.back().push_back(scope);
-			vectorPropNames.back().push_back(std::get<0>(p));
+			vectorPropScopes.push_back(scope);
+			vectorPropNames.push_back(std::get<0>(p));
 		}
 		else
 		{
@@ -228,10 +228,10 @@ AbcWriter::addSample(const std::vector<Alembic::Abc::V3f>& vertices,
 
 	//std::cout << "Writing Colour Props..." << std::endl;
 	size_t colourIdx = 0;
-	for(size_t i = 0; i < vectorProps[meshIdx].size(); ++i)
+	for(size_t i = 0; i < vectorProps.size(); ++i)
 	{
 		//std::cout <<  m_arbNames[floatProps.size() + i] << std::endl;
-		if(m_arbNames[floatProps[meshIdx].size() + i] == "Cd")
+		if(m_arbNames[meshIdx][floatProps.size() + i] == "Cd")
 		{
 			Alembic::AbcGeom::OC3fGeomParam::Sample vectorSamp;
 			vectorSamp.setScope(m_arbScopes[meshIdx][floatProps.size() + i]);
