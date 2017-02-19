@@ -251,3 +251,45 @@ AbcWriter::addSample(const std::vector<Alembic::Abc::V3f>& vertices,
 
 	return true;
 }
+
+
+void AbcWriter::addXFormSample(const Alembic::Abc::V3d& translate, const Alembic::Abc::V3d& scale, 
+	const double angleInDegreesX, const double angleInDegreesY, const double angleInDegreesZ, size_t meshIdx)
+{
+	Alembic::AbcGeom::OXformSchema& schema = m_data[meshIdx]->transform->getSchema();
+
+	Alembic::AbcGeom::XformSample sample;
+
+	sample.setTranslation(translate);
+	sample.setScale(scale);
+	sample.setXRotation(angleInDegreesX);
+	sample.setYRotation(angleInDegreesY);
+	sample.setZRotation(angleInDegreesZ);
+
+	schema.set(sample);
+}
+
+void AbcWriter::addXFormSample(const Alembic::Abc::V3d& translate, const Alembic::Abc::V3d& scale, 
+	const Alembic::Abc::V3d& rotationAxis, const double angleInDegrees, size_t meshIdx)
+{
+	Alembic::AbcGeom::OXformSchema& schema = m_data[meshIdx]->transform->getSchema();
+
+	Alembic::AbcGeom::XformSample sample;
+
+	sample.setTranslation(translate);
+	sample.setScale(scale);
+	sample.setRotation(rotationAxis, angleInDegrees);
+
+	schema.set(sample);
+}
+
+void AbcWriter::addXFormSample(const Alembic::Abc::M44d& transformMatrix, size_t meshIdx)
+{
+	Alembic::AbcGeom::OXformSchema& schema = m_data[meshIdx]->transform->getSchema();
+
+	Alembic::AbcGeom::XformSample sample;
+
+	sample.setMatrix(transformMatrix);
+
+	schema.set(sample);
+}

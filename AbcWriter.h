@@ -31,7 +31,16 @@ public:
 		const std::vector<std::vector<float>> floatProps,
 		const std::vector<std::vector<Alembic::Abc::V3f>> vectorProps, size_t meshIdx = 0);
 	
+	// Three different ways to write a transform sample
+	//! Order of ops: translate, scale, rotateX, rotateY, rotateZ
+	void addXFormSample(const Alembic::Abc::V3d& translate, const Alembic::Abc::V3d& scale, 
+		const double angleInDegreesX, const double angleInDegreesY, const double angleInDegreesZ, size_t meshIdx = 0);
 
+	//! Order of ops: translate, scale, rotate
+	void addXFormSample(const Alembic::Abc::V3d& translate, const Alembic::Abc::V3d& scale, 
+		const Alembic::Abc::V3d& rotationAxis, const double angleInDegrees, size_t meshIdx = 0);
+
+	void addXFormSample(const Alembic::Abc::M44d& transformMatrix, size_t meshIdx = 0);
 
 private:
 	void setupObject(const std::string& xFormName, const std::string& meshName,
